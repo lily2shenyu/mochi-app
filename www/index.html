@@ -8250,6 +8250,21 @@ user-select: none;
 -webkit-user-select: none;
 }
 .mood-fold-tip:active { opacity: .9; }
+.chat-input-row.lili-input-collapsed { display: none !important; }
+.lili-input-handle {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 4px;
+font-size: 11px;
+line-height: 1.4;
+padding: 3px 0 7px;
+opacity: .42;
+cursor: pointer;
+user-select: none;
+-webkit-user-select: none;
+}
+.lili-input-handle:active { opacity: .85; }
 </style>
 </head>
 <body>
@@ -8422,9 +8437,9 @@ user-select: none;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1790515715752">
+      <div class="splash-ver" id="splash-ver" data-build-ts="1790516356811">
         <span class="sv-app">Mochi 字卡传讯 <b>v3.26.0</b></span>
-        <span class="sv-deploy">部署于 2026-09-27 13:28<span id="splash-ver-live"></span></span>
+        <span class="sv-deploy">部署于 2026-09-27 13:39<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -71240,6 +71255,40 @@ else scan(n);
 }
 }
 }).observe(document.documentElement, { childList: true, subtree: true });
+} catch (e) {}
+})();
+/* ===== 沈屿 & 栗栗（2026-09-27）=====
+底部那条输入栏（说点什么…那一条）做一个小把手：点一下收起、再点一下展开。 */
+(function () {
+'use strict';
+function init() {
+var row = document.querySelector('.chat-input-row');
+if (!row || row.dataset.liliToggle === '1') return;
+row.dataset.liliToggle = '1';
+var handle = document.createElement('div');
+handle.className = 'lili-input-handle';
+function paint() {
+var folded = row.classList.contains('lili-input-collapsed');
+handle.textContent = folded ? '⌃  展开输入栏' : '⌄  收起输入栏';
+}
+handle.addEventListener('click', function (ev) {
+ev.stopPropagation();
+var folded = row.classList.toggle('lili-input-collapsed');
+if (folded) {
+try { var inp = document.getElementById('chat-input'); if (inp) inp.blur(); } catch (e) {}
+}
+paint();
+});
+if (row.parentNode) row.parentNode.insertBefore(handle, row.nextSibling);
+paint();
+}
+init();
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', init);
+}
+try {
+new MutationObserver(function () { init(); })
+.observe(document.documentElement, { childList: true, subtree: true });
 } catch (e) {}
 })();
 } catch (__e) { try { console.error("[JS] lili-tweaks.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
