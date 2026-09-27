@@ -8234,6 +8234,22 @@ animation-iteration-count: 1 !important;
 transition-duration: .01ms !important;
 }
 }
+.msg-moods.is-folded { display: none !important; }
+.mood-fold-tip {
+display: inline-block;
+margin: 3px 0 0 2px;
+padding: 1px 8px;
+font-size: 11px;
+line-height: 1.7;
+border-radius: 9px;
+color: currentColor;
+opacity: .55;
+border: 1px dashed currentColor;
+cursor: pointer;
+user-select: none;
+-webkit-user-select: none;
+}
+.mood-fold-tip:active { opacity: .9; }
 </style>
 </head>
 <body>
@@ -8406,9 +8422,9 @@ transition-duration: .01ms !important;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1788017728668">
-        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.356</b></span>
-        <span class="sv-deploy">部署于 2026-08-29 23:35<span id="splash-ver-live"></span></span>
+      <div class="splash-ver" id="splash-ver" data-build-ts="1790515715752">
+        <span class="sv-app">Mochi 字卡传讯 <b>v3.26.0</b></span>
+        <span class="sv-deploy">部署于 2026-09-27 13:28<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -9498,7 +9514,7 @@ transition-duration: .01ms !important;
           <div class="txt">清除本地数据</div>
         </div>
       </div>
-      <div class="ver">Mochi 字卡传讯 v3.26.356</div>
+      <div class="ver">Mochi 字卡传讯 v3.26.0</div>
       <div class="ver-credit">原版小红书@言序（1842523578）</div>
     </div>
 
@@ -9706,7 +9722,7 @@ transition-duration: .01ms !important;
             <div class="lic-hero-top">
               <div class="lic-title">Mochi 字卡传讯</div>
               <span class="lic-badge">原版</span>
-              <span class="lic-ver">v3.26.356</span>
+              <span class="lic-ver">v3.26.0</span>
             </div>
             <div class="lic-p">原创极简风情侣聊天模拟器：黑白灰简约设计，数据全部保存在本地、无需联网；所有内容均为代码触发、按概率运行，联系方可主动发送聊天消息。代码从零编写并完全开源——本作即原版。</div>
             <div class="lic-pills">
@@ -15215,6 +15231,11 @@ try { localStorage.setItem(seenKey, '1'); seenToday = true; } catch (e) {}
 hide();
 };
 updateEnterState();
+/*沈屿 & 栗栗 2026-09-27：不要开屏提示——数据一就绪就自己进去（不用滑到底、不用点）*/
+(function () {
+const autoEnter = () => { try { if (ready()) { hide(); return true; } } catch (e) {} return false; };
+if (!autoEnter()) document.addEventListener('mochi-restore-done', autoEnter);
+})();
 if (splashBox) splashBox.addEventListener('scroll', checkScrolled, { passive: true });
 if (enterEl) enterEl.addEventListener('click', (e) => { e.stopPropagation(); enter(); });
 document.addEventListener('mochi-restore-done', updateEnterState);
@@ -71176,6 +71197,52 @@ return { lock: document.body.classList.contains('scroll-lock'), open: open };
 };
 })();
 } catch (__e) { try { console.error("[JS] mobile-adapt.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
+(function () { try {
+/* ===== 沈屿 & 栗栗（2026-09-27）=====
+把聊天里的「心意 / 情绪 / 交流意图」字卡行折叠起来：
+默认只留一枚小标签，点一下展开、再点收起。 */
+(function () {
+'use strict';
+var TIP_TEXT = '心意 ⋯';
+function foldOne(box) {
+if (!box || box.dataset.liliFold === '1') return;
+box.dataset.liliFold = '1';
+box.classList.add('is-folded');
+var tip = document.createElement('span');
+tip.className = 'mood-fold-tip';
+tip.textContent = TIP_TEXT;
+tip.addEventListener('click', function (ev) {
+ev.stopPropagation();
+var folded = box.classList.toggle('is-folded');
+tip.textContent = folded ? TIP_TEXT : '收起';
+});
+if (box.parentNode) box.parentNode.insertBefore(tip, box);
+}
+function scan(root) {
+try {
+var nodes = (root || document).querySelectorAll('.msg-moods');
+for (var i = 0; i < nodes.length; i++) foldOne(nodes[i]);
+} catch (e) {}
+}
+scan();
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', function () { scan(); });
+}
+try {
+new MutationObserver(function (muts) {
+for (var i = 0; i < muts.length; i++) {
+var added = muts[i].addedNodes || [];
+for (var j = 0; j < added.length; j++) {
+var n = added[j];
+if (n.nodeType !== 1) continue;
+if (n.classList && n.classList.contains('msg-moods')) foldOne(n);
+else scan(n);
+}
+}
+}).observe(document.documentElement, { childList: true, subtree: true });
+} catch (e) {}
+})();
+} catch (__e) { try { console.error("[JS] lili-tweaks.js", __e && __e.message || __e); } catch (x) {} if (window.__jsErrors) window.__jsErrors.push(String(__e && __e.message || __e)); } })();
   </script>
 
   <!-- PWA 安装到桌面按钮（Chrome/Edge 触发 beforeinstallprompt 时显示） -->
