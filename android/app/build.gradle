@@ -5,6 +5,16 @@ plugins {
 android {
     namespace 'com.lilidreamlove.mochi'
     compileSdk 34
+
+    signingConfigs {
+        mochi {
+            storeFile file('../keystore/mochi.keystore')
+            storePassword 'lilidreamlove'
+            keyAlias 'lilidreamlove'
+            keyPassword 'lilidreamlove'
+        }
+    }
+
     defaultConfig {
         applicationId "com.lilidreamlove.mochi"
         minSdk 24
@@ -13,7 +23,11 @@ android {
         versionName "1.1"
     }
     buildTypes {
+        debug {
+            signingConfig signingConfigs.mochi
+        }
         release {
+            signingConfig signingConfigs.mochi
             minifyEnabled false
         }
     }

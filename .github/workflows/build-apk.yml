@@ -18,8 +18,29 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android SDK (preinstalled)
+        run: |
+          echo "SDK=$ANDROID_HOME"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then SDKMANAGER=$(find "$ANDROID_HOME" -name sdkmanager -type f 2>/dev/null | head -1); fi
+          echo "sdkmanager=$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" "platforms;android-34" "build-tools;34.0.0" "platform-tools" > /dev/null 2>&1 || true
+          echo "--- platforms ---"; ls "$ANDROID_HOME/platforms" || true
+          echo "--- build-tools ---"; ls "$ANDROID_HOME/build-tools" || true
+
+      - name: Cache signing keystore
+        uses: actions/cache@v4
+        with:
+          path: android/keystore
+          key: mochi-keystore-v1
+
+      - name: Ensure signing keystore
+        run: |
+          mkdir -p android/keystore
+          if [ ! -f android/keystore/mochi.keystore ]; then
+            keytool -genkeypair -v -keystore android/keystore/mochi.keystore -alias lilidreamlove -keyalg RSA -keysize 2048 -validity 10000 -storepass lilidreamlove -keypass lilidreamlove -dname "CN=MOCHI, OU=lili, O=shenyu, L=city, S=state, C=CN"
+          fi
 
       - name: Download Gradle
         run: |
