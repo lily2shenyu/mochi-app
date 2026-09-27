@@ -8266,6 +8266,9 @@ user-select: none;
 }
 .lili-input-handle:active { opacity: .85; }
 #chat-mic-btn, #chat-emoji-btn { display: none !important; }
+.lili-input-handle { display: none !important; }
+.chat-body .msg-in { margin-left: -6px; }
+.chat-body .msg-out { margin-right: -6px; }
 </style>
 </head>
 <body>
@@ -8438,9 +8441,9 @@ user-select: none;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1790516948292">
+      <div class="splash-ver" id="splash-ver" data-build-ts="1790517648064">
         <span class="sv-app">Mochi 字卡传讯 <b>v3.26.0</b></span>
-        <span class="sv-deploy">部署于 2026-09-27 13:49<span id="splash-ver-live"></span></span>
+        <span class="sv-deploy">部署于 2026-09-27 14:00<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
