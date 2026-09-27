@@ -8265,6 +8265,7 @@ user-select: none;
 -webkit-user-select: none;
 }
 .lili-input-handle:active { opacity: .85; }
+#chat-mic-btn, #chat-emoji-btn { display: none !important; }
 </style>
 </head>
 <body>
@@ -8437,9 +8438,9 @@ user-select: none;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1790516356811">
+      <div class="splash-ver" id="splash-ver" data-build-ts="1790516948292">
         <span class="sv-app">Mochi 字卡传讯 <b>v3.26.0</b></span>
-        <span class="sv-deploy">部署于 2026-09-27 13:39<span id="splash-ver-live"></span></span>
+        <span class="sv-deploy">部署于 2026-09-27 13:49<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -71288,6 +71289,62 @@ document.addEventListener('DOMContentLoaded', init);
 }
 try {
 new MutationObserver(function () { init(); })
+.observe(document.documentElement, { childList: true, subtree: true });
+} catch (e) {}
+})();
+/* ===== 沈屿 & 栗栗（2026-09-27）=====
+把输入栏上的「语音录制」和「表情包」搬进「⋯」面板的「互动」分类里
+（面板本身的分类 chips：互动 / 工具 / 小游戏 / TA的提问） */
+(function () {
+'use strict';
+var MIC_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>';
+var EMOJI_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9.5l.01.01M15 9.5l.01.01"/></svg>';
+function currentCat() {
+var sel = document.querySelector('#more-tabs .more-tab.sel');
+return sel ? sel.getAttribute('data-mcat') : 'chat';
+}
+function sync() {
+var cat = currentCat();
+var items = document.querySelectorAll('.lili-moved-item');
+for (var i = 0; i < items.length; i++) {
+items[i].style.display = (cat === 'chat') ? '' : 'none';
+}
+}
+function build() {
+var grid = document.getElementById('more-grid-fun');
+if (!grid || grid.dataset.liliMoved === '1') return;
+grid.dataset.liliMoved = '1';
+function add(srcId, label, svg) {
+var b = document.createElement('button');
+b.className = 'more-item lili-moved-item';
+b.type = 'button';
+b.setAttribute('data-mcat', 'chat');   // 归到「互动」
+b.title = label;
+b.innerHTML = '<span class="mi-ico">' + svg + '</span><span>' + label + '</span>';
+b.addEventListener('click', function (ev) {
+ev.preventDefault();
+ev.stopPropagation();
+var t = document.getElementById(srcId);
+if (t) t.click();                     // 还是走原来那套流程
+});
+grid.appendChild(b);
+}
+add('chat-mic-btn', '语音录制', MIC_SVG);
+add('chat-emoji-btn', '表情包', EMOJI_SVG);
+sync();
+}
+build();
+if (document.readyState === 'loading') {
+document.addEventListener('DOMContentLoaded', function () { build(); sync(); });
+}
+document.addEventListener('click', function (ev) {
+var t = ev.target;
+if (!t || !t.closest) return;
+if (t.closest('#more-tabs .more-tab')) { setTimeout(sync, 0); }
+if (t.closest('#chat-more-btn')) { setTimeout(function () { build(); sync(); }, 0); }
+}, true);
+try {
+new MutationObserver(function () { build(); sync(); })
 .observe(document.documentElement, { childList: true, subtree: true });
 } catch (e) {}
 })();
