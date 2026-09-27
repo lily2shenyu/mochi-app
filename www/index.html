@@ -8441,9 +8441,9 @@ user-select: none;
     <!-- v3.8.y：底部统一装进一个卡片框（版本/加载/提示/按钮成一整体，与顶部品牌卡片呼应） -->
     <div class="splash-footcard">
       <!-- v3.8.y：底部版本块——两行：名称+版本 / 部署时间+实时秒数（实时秒写入 #splash-ver-live） -->
-      <div class="splash-ver" id="splash-ver" data-build-ts="1790517648064">
+      <div class="splash-ver" id="splash-ver" data-build-ts="1790518172056">
         <span class="sv-app">Mochi 字卡传讯 <b>v3.26.0</b></span>
-        <span class="sv-deploy">部署于 2026-09-27 14:00<span id="splash-ver-live"></span></span>
+        <span class="sv-deploy">部署于 2026-09-27 14:09<span id="splash-ver-live"></span></span>
       </div>
       <!-- v3.5.120：数据（IndexedDB 回填）加载完成前不显示「点击进入」按钮，
            只显示加载提示；就绪后按钮才出现（clock.js 控制显隐） -->
@@ -26890,52 +26890,51 @@ let g = null;
 if (myCurGroup) g = myGroups.find(x => x[0] === myCurGroup) || null;
 if (!g && myGroups.length) g = myGroups[0];
 if (!g) { g = ['默认', []]; myGroups.unshift(g); }
-let done = 0, okCount = 0;
-files.forEach(f => {
+/* v3.27(栗栗 2026-09-27)：排队逐个吃——一次丢 100 张也不会并发卡死，
+每张处理完再吃下一张，顺便报进度。上限 100 张/次。 */
+const MAXN = 100;
+const queue = files.slice(0, MAXN);
+const overLimit = files.length - queue.length;
+let qi = 0, okCount = 0, badCount = 0;
+const finishAll = () => {
+const ok = myEmojiSave();
+myCurGroup = g[0];
+saveEmojiGroupPref();
+renderEmojiPanel();
+let msg = '已添加 ' + okCount + ' 个表情';
+if (badCount) msg += '，跳过 ' + badCount + ' 个';
+if (overLimit > 0) msg += '（一次最多 ' + MAXN + ' 张，剩下的下次再选）';
+if (!ok) toast('存储空间不足：表情已用备用存储，刷新后恢复。请清理不用的表情');
+else toast(msg);
+};
+const nextOne = () => {
+if (qi >= queue.length) { finishAll(); return; }
+const f = queue[qi++];
+const at = qi;
+if (queue.length > 1 && (at === 1 || at % 10 === 0 || at === queue.length)) {
+toast('正在添加 ' + at + ' / ' + queue.length);
+}
 const reader = new FileReader();
 reader.onload = () => {
 const isGif = /image\/gif/i.test(f.type || '') || /\.gif$/i.test(f.name || '');
 if (isGif) {
-if (reader.result.length > 8 * 1024 * 1024) {
-done++;
-if (done === files.length) { myEmojiSave(); renderEmojiPanel(); toast('动图过大，已跳过（请用 10MB 以内的 GIF）'); }
-return;
-}
+if (reader.result.length > 8 * 1024 * 1024) { badCount++; nextOne(); return; }
 g[1].push(reader.result);
 okCount++;
-done++;
-if (done === files.length) {
-const ok = myEmojiSave();
-myCurGroup = g[0];
-saveEmojiGroupPref();
-renderEmojiPanel();
-if (!ok) toast('存储空间不足：表情已用备用存储，刷新后恢复。请清理不用的表情');
-else toast('已添加 ' + okCount + ' 个表情');
-}
+nextOne();
 return;
 }
 compressMyEmoji(reader.result, 260).then(data => {
-if (!data) {
-done++;
-if (done === files.length) { myEmojiSave(); renderEmojiPanel(); toast('图片过大或格式不支持，已跳过'); }
-return;
-}
+if (!data) { badCount++; nextOne(); return; }
 g[1].push(data);
 okCount++;
-done++;
-if (done === files.length) {
-const ok = myEmojiSave();
-myCurGroup = g[0];
-saveEmojiGroupPref();
-renderEmojiPanel();
-if (!ok) toast('存储空间不足：表情已用备用存储，刷新后恢复。请清理不用的表情');
-else toast('已添加 ' + okCount + ' 个表情');
-}
+nextOne();
 });
 };
-reader.onerror = () => { done++; if (done === files.length) { myEmojiSave(); renderEmojiPanel(); toast('部分图片读取失败'); } };
+reader.onerror = () => { badCount++; nextOne(); };
 reader.readAsDataURL(f);
-});
+};
+nextOne();
 };
 fi.click();
 });
